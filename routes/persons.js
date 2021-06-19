@@ -3,6 +3,10 @@ const router = express.Router();
 let { persons } = require('../puhelinluettelo.json');
 
 
+router.get('/', (req,res) => {
+  res.status(200).json(persons);
+})
+
 router.get('/:id', (req,res) => {
   const id = Number(req.params.id);
   const note = persons.find(person => person.id === id)
