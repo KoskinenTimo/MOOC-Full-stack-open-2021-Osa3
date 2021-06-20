@@ -1,12 +1,12 @@
 const express = require('express');
 const app = express();
+app.use(express.json());
 
 // Cross Origin
 const cors = require('cors');
 app.use(cors());
 
-app.use(express.json());
-
+// Morgan For logging
 const morgan = require('morgan');
 morgan.token('body', function (req, res) { return req.method === "POST" ? JSON.stringify(req.body) : null })
 app.use(morgan(':method :url :status :response-time ms - :res[content-length] :body'));
@@ -14,7 +14,8 @@ app.use(morgan(':method :url :status :response-time ms - :res[content-length] :b
 // Data
 const { persons } = require('./puhelinluettelo.json');
 
-
+// Front End Build
+app.use(express.static('build'))
 
 // Router Routes
 const personsRoute = require('./routes/persons');
