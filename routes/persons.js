@@ -53,6 +53,8 @@ router.post('/', (req,res,next) => {
       .catch(err => {
         if(err.errors.name.kind === 'mongoose-unique-validator') {
           err.status = 409;
+        } else if (err.name === "ValidationError") {
+          err.status = 400;         
         }
         next(err);
       })
