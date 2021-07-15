@@ -2,6 +2,12 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 
+// Env var middleware
+require('dotenv').config();
+
+// Models
+const Person = require('./models/person');
+
 // Cross Origin
 const cors = require('cors');
 app.use(cors());
@@ -30,7 +36,16 @@ app.get('/info', (req,res) => {
   res.send(message);
 })
 
-const PORT = process.env.PORT || 3001
+app.use((req,res) => {
+  res.status(404).json({ error: 'Route not found!' })
+})
+
+app.use((err, req, res, next) => {
+  console.log(err);
+  res.status(err.status || 500).json({ message: err.message })
+})
+
+const PORT = process.env.PORT
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })

@@ -1,41 +1,101 @@
+/**
+ * PHONEBOOK ROUTES FOR CRUD OPERATIONS
+ */
+
 const express = require('express');
 const router = express.Router();
-let { persons } = require('../puhelinluettelo.json');
+const Person = require('../models/person');
 
 
-router.get('/', (req,res) => {
-  res.status(200).json(persons);
+/**
+ * Get whole phonebook.
+ */
+router.get('/', (req,res,next) => {
+  Person.find({})
+    .then(persons => {
+      res.json(persons);
+    })
+    .catch(err => next(err));
 })
 
-router.get('/:id', (req,res) => {
-  const id = Number(req.params.id);
-  const note = persons.find(person => person.id === id)
-  if (note) {
-    res.status(200).json(note)
-  } else {
-    res.status(404).end();
-  }
+/**
+ * Get one person from phonebook.
+ */
+router.get('/:id', (req,res,next) => {
+  const id = req.params.id;
+  Person.findById(id)
+    .then(result => {
+      if (result) {
+        res.json(result)
+      } else {
+        const err = new Error();
+        err.message = "Id not found."
+        err.status = 404;
+        next(err);
+      }
+      
+    })
+    .catch(err => next(err))
 })
 
-router.post('/', (req,res) => {
+/**
+ * Post one person into the phonebook.
+ */
+router.post('/', (req,res,next) => {
   const newPerson = req.body;
   if (newPerson.name && newPerson.number) {
-    if (persons.find(person => person.name === newPerson.name)) {
-      res.status(403).json({error:"Name must be unique"})
-    } else {
-      newPerson.id = Math.floor(Math.random()*100000);
-      persons.push(newPerson);
-      res.json(newPerson);
-    }
+    const person = new Person(newPerson);
+    person.save()
+      .then(savedPerson => {
+        console.log(`Added ${savedPerson.name}`);
+        res.json(savedPerson);
+      })
+      .catch(err => {
+        if(err.errors.name.kind === 'mongoose-unique-validator') {
+          err.status = 409;
+        }
+        next(err);
+      })
   } else {
-    res.status(400).json({error:"No Content"})
+    const err = new Error();
+    err.message = 'Name and number required.'
+    err.status = 400;
+    next(err);
   }
 })
 
-router.delete('/:id', (req,res) => {
-  const id = Number(req.params.id);
-  persons = persons.filter(person => person.id !== id);
-  res.status(204).end()
+/**
+ * Updates a person details in phonebook.
+ */
+router.put('/:id', (req,res,next) => {
+  const updatedPerson = req.body;
+  const id = req.params.id;
+  if (updatedPerson.name && updatedPerson.number) {
+    Person.findByIdAndUpdate(id, updatedPerson, { new: true })
+    .then(person => {
+      res.json(person)
+    })
+    .catch(err => next(err))
+  } else {
+    const err = new Error();
+    err.message = 'Name and number required.'
+    err.status = 400;
+    next(err);
+  }
+
 })
+
+/**
+ * Deletes a person from phonebook.
+ */
+router.delete('/:id', (req,res,next) => {
+  const id = req.params.id;
+  Person.findByIdAndDelete(id)
+    .then(result => {
+      res.status(204).end();
+    })
+    .catch(err => next(err));
+})
+
 
 module.exports = router;
