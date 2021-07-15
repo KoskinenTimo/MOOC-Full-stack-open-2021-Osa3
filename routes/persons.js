@@ -51,7 +51,7 @@ router.post('/', (req,res,next) => {
         res.json(savedPerson);
       })
       .catch(err => {
-        if(err.errors.name.kind === 'mongoose-unique-validator') {
+        if(err.errors['name'] && err.errors['name'].kind === 'mongoose-unique-validator') {
           err.status = 409;
         } else if (err.name === "ValidationError") {
           err.status = 400;         
@@ -70,14 +70,19 @@ router.post('/', (req,res,next) => {
  * Updates a person details in phonebook.
  */
 router.put('/:id', (req,res,next) => {
-  const updatedPerson = req.body;
+  const { name, number } = req.body;
   const id = req.params.id;
-  if (updatedPerson.name && updatedPerson.number) {
-    Person.findByIdAndUpdate(id, updatedPerson, { new: true })
+  if (name && number) {
+    Person.findByIdAndUpdate(id, { name: name, number: number}, { new: true, runValidators: true, context: 'query' })
     .then(person => {
       res.json(person)
     })
-    .catch(err => next(err))
+    .catch(err => {
+      if (err.name === "ValidationError") {
+        err.status = 400;         
+      }
+      next(err);      
+    })
   } else {
     const err = new Error();
     err.message = 'Name and number required.'
