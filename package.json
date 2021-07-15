@@ -15,7 +15,7 @@
   "author": "Timo Koskinen",
   "license": "ISC",
   "devDependencies": {
-    "nodemon": "^2.0.7"
+    "nodemon": "^2.0.12"
   },
   "dependencies": {
     "cors": "^2.8.5",
