@@ -22,6 +22,13 @@ jobs:
         run: npm run lint
       - id: build
         run: npm run build:ui
+      - uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: author,action,eventName,workflow,job,took,eventName
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: failure()        
   tag_version:
     runs-on: ubuntu-18.04
     steps:
@@ -50,3 +57,34 @@ jobs:
           command: npm run test:e2e
           start: npm start
           wait-on: http://localhost:3001
+  simple_deployment:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - id: deploy
+        if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message, ', '), '#skip')}}
+        uses: akhileshns/heroku-deploy@v3.12.12
+        with:
+          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+          heroku_app_name: "immense-garden-66508" 
+          heroku_email: "koskinentht@gmail.com"
+          healthcheck: "https://immense-garden-66508.herokuapp.com/health"
+          checkstring: "ok"
+          rollbackonhealthcheckfailed: true
+      - uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          fields: workflow,job,commit,repo,ref,author,took
+          custom_payload: |
+            {
+              attachments: [{
+                color: '${{ job.status }}' === 'success' ? 'good' : '${{ job.status }}' === 'failure' ? 'danger' : 'warning',
+                text: `${process.env.AS_WORKFLOW}\nDeployment succesful ${process.env.AS_REPO} by ${process.env.AS_AUTHOR} ${{ job.status }} in ${process.env.AS_TOOK}`,
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: ${{ always() && steps.deploy.outcome == 'success' }}
