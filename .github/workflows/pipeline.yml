@@ -21,7 +21,7 @@ jobs:
       - name: lint
         run: npm run lint
       - id: build
-        run: npm run build
+        run: npm run build:ui
   tag_version:
     runs-on: ubuntu-18.04
     steps:
