@@ -21,6 +21,13 @@ const { persons } = require('./puhelinluettelo.json');
 // Front End Build
 app.use(express.static('build'));
 
+app.get('/health', (req, res) => {
+  res.send('ok');
+});
+
+app.get('/version', (req, res) => {
+  res.send('1'); // change this string to ensure a new version deployed
+});
 // Router Routes
 const personsRoute = require('./routes/persons');
 app.use('/api/persons', personsRoute);
